@@ -5,14 +5,11 @@ const mongoose = require('mongoose');
 
 mongoose.connect('mongodb+srv://Ictakprojectgroup4:Project123@cluster0.uvz0n.mongodb.net/Ictakproject4?retryWrites=true&w=majority');
 //schema definition
-const Schema1 = mongoose.Schema;
+const Schema2 = mongoose.Schema;
 //creating a model ith the collection
-var userinfoSchema = new Schema1({
-       
-    email: String,
-    password: String,
-    utype: String
+var counterinfoSchema = new Schema2({
+    type: String,
+    seq: Number
 });
-var UserLoginInfo = mongoose.model('logins', userinfoSchema);
-
-module.exports= UserLoginInfo;
+var CounterInfo = mongoose.model('counters', counterinfoSchema);
+module.exports= CounterInfo;
