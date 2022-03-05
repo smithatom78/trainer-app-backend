@@ -17,6 +17,7 @@ app.get('/', function (req, res) {
 /*app.post('/', function (req, res) {
     res.send(`hi ${req.body.name} trainerpost`);
 });*/
+
 //add trainer
 app.post('/api/enroll', async (req, res) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -54,7 +55,20 @@ function updateSequence(newId) {
         return data;
     })
 }
+//view trainer
+app.get('/api/viewprofile/:email',  async(req, res) => {
+    
+    const _email = req.params.email;
+    const filter = { email: _email };
+    let doc1 = await TrainerInfo.findOne(filter)
+    console.log("trainer", doc1);
 
+    //UserInfo.findOneAndUpdate(filter, {type:type, approved:'true'}, { new: true })
+  //  .then(function(users){
+      res.json(doc1);
+//});
+    
+});
 //routing register
 app.post("/api/register", async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -69,7 +83,7 @@ app.post("/api/register", async (req, res) => {
                 let user = new UserLoginInfo({
                     email: req.body.email,
                     password: bcrpt.hashSync(req.body.password, 10),
-                    utype: req.body.utype
+                    utype: "trainer"
                 })
                 let result = user.save((err, data) => {
                     if (err) {
@@ -102,7 +116,7 @@ app.post('/api/userlogin', async (req, res) => {
         var userEmail = req.body.email
         var userPass = req.body.password
         var utype=req.body.utype
-        let result = UserLoginInfo.find({ email: userEmail }, (err, data) => {
+        let result = UserLoginInfo.find({ email: userEmail}, (err, data) => {
             if (data.length > 0) {
                 const passwordValidator = bcrpt.compareSync(userPass, data[0].password)
                 console.log(passwordValidator)
@@ -123,10 +137,6 @@ app.post('/api/userlogin', async (req, res) => {
                         }
 
                     )
-
-
-                    /////////
-
 
                 }
                 else {
