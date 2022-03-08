@@ -22,7 +22,7 @@ app.get('/', function (req, res) {
 app.post('/api/enroll', async (req, res) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-     const newId = await getNextSequence();
+    const newId = await getNextSequence();
     console.log("newId", newId);
     let val = req.body;
     val.id = newId;
@@ -56,18 +56,18 @@ function updateSequence(newId) {
     })
 }
 //view trainer
-app.get('/api/viewprofile/:email',  async(req, res) => {
-    
+app.get('/api/viewprofile/:email', async (req, res) => {
+
     const _email = req.params.email;
     const filter = { email: _email };
     let doc1 = await TrainerInfo.findOne(filter)
     console.log("trainer", doc1);
 
     //UserInfo.findOneAndUpdate(filter, {type:type, approved:'true'}, { new: true })
-  //  .then(function(users){
-      res.json(doc1);
-//});
-    
+    //  .then(function(users){
+    res.json(doc1);
+    //});
+
 });
 //routing register
 app.post("/api/register", async (req, res) => {
@@ -87,20 +87,20 @@ app.post("/api/register", async (req, res) => {
                 })
                 let result = user.save((err, data) => {
                     if (err) {
-                        res.json({ status: 'error happened' })
+                        res.status(201).send({ status: 'error happened' })
                     }
                     else {
-                        res.json({ status: 'sucesss' })
+                        res.send({ status: 'sucesss' })
                     }
                 })
             }
             else {
-                res.json({ status: 'email id already exists' })
+                res.status(201).send({ status: 'email id already exists' })
             }
         })
     }
     catch (error) {
-        res.json({ status: 'error' })
+        res.status(201).send({ status: 'error' })
     }
 })
 
@@ -115,51 +115,66 @@ app.post('/api/userlogin', async (req, res) => {
         console.log(req.body)
         var userEmail = req.body.email
         var userPass = req.body.password
-        var utype=req.body.utype
-        let result = UserLoginInfo.find({ email: userEmail}, (err, data) => {
+        var utype = req.body.utype
+        //for approve check
+        let result = UserLoginInfo.find({ email: userEmail }, (err, data) => {
             if (data.length > 0) {
-                const passwordValidator = bcrpt.compareSync(userPass, data[0].password)
-                console.log(passwordValidator)
-                if (passwordValidator) {
-                    // token generation
-                    jwt.sign({ email: data[0].email, id: data[0]._id },
-                        'godblessu',
-                        { expiresIn: '1d' },
-                        (err, token) => {
-                            if (err) {
-                                res.json({ status: 'error in token generation' })
+                try {
+                    const passwordValidator = bcrpt.compareSync(userPass, data[0].password)
+                    console.log(passwordValidator)
+                    if (passwordValidator) {
+                        // token generation
+                        jwt.sign({ email: data[0].email, id: data[0]._id },
+                            'godblessu',
+                            { expiresIn: '1d' },
+                            (err, token) => {
+                                if (err) {
+                                    res.status(201).send({ status: 'error in token generation' })
+                                }
+                                else {
+                                    let pwCheckFlag = false;
+                                    if (utype == "trainer") {
+                                        let approve = TrainerInfo.find({ email: userEmail }, (err, data1) => {
+                                            if (data1.length > 0) {
+                                                pwCheckFlag = data1[0].approved;
+                                                console.log("appr", pwCheckFlag)
+                                                if (pwCheckFlag) {
+                                                    res.send({ status: 'login success', token: token })
+                                                    return;
+                                                }else{
+                                                    res.status(201).send({ status: 'unauthorised' })
+                                                    return
+                                                }
+                                            }
+                                        })
+                                    } else {
+                                        res.send({ status: 'login success', token: token })
+                                        return;
+                                    }
+                                }
                             }
-                            else {
-                                res.json({ status: 'login success', token: token })
-                                req.session.loggedin = true;
-
-                            }
-                        }
-
-                    )
-
+                        )
+                    }
+                    else {
+                        res.status(201).send({ status: 'invalid password' })
+                    }
                 }
-                else {
-                    res.json({ status: 'invalid password' })
-
+                catch (error) {
+                    res.json({ status: 'error..failed' })
                 }
-
             }
             else {
-                res.json({ status: 'invalid email id' })
-
+                res.status(201).send({ status: 'invalid email id' })
             }
         })
 
 
-
-
+        //end approve check
     }
     catch (error) {
-        res.json({ status: 'error' })
+        res.json({ status: 'error..authentication failed' })
 
     }
-
 })
 
 //listening to port
